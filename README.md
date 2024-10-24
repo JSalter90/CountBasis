@@ -1,3 +1,5 @@
+# CountBasis
+
 Code used in 'Emulating computer models with high-dimensional count output'
 
 General UQ/emulation functions are taken from (and updated at) https://github.com/JSalter90/UQ
