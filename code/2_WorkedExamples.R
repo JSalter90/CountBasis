@@ -3,7 +3,7 @@ source('code/1_ProcessData.R') # also loads in 0_CountBasis.R
 
 # Also load in functions for emulation - states of these as of 24/10/24 copied into this repository, updated elsewhere
 source('uq_code/PlotFunctions.R')
-source('uq_code/Gasp.R')
+#source('uq_code/Gasp.R') # To do homoscedastic comparison, need this, however didn't use in final paper so commented out here
 
 # Inputs
 dim(design) # 250 unique input sets, $repeats gives number of replicates for each
@@ -67,35 +67,37 @@ PlotPair(tData, 'R0', 'ns', col = 'C1')
 # Now just need to emulate the latent coefficients, for the leading q basis vectors
 # For comparison, try both a standard stationary homoscedastic GP, vs hetGP
 # Only need q=3 or 4 here, beyond that little predictability in this problem
-EmDeaths <- BasisEmulators(tData, 4, mean_fn = 'step', training_prop = 1)
-PlotActive(EmDeaths, InputNames = colnames(tData)[1:15])
+# COMMENTED OUT AS NOT IN MAIN PAPER
+#EmDeaths <- BasisEmulators(tData, 4, mean_fn = 'step', training_prop = 1)
+#PlotActive(EmDeaths, InputNames = colnames(tData)[1:15])
 
 # Leave-one-outs. By 4th vector, prediction poor, might just be trying to fit to noise
-LOOs <- lapply(1:length(EmDeaths), function(k) LeaveOneOut(EmDeaths[[k]]))
-cowplot::plot_grid(LOOs[[1]], LOOs[[2]], LOOs[[3]], LOOs[[4]])
+#LOOs <- lapply(1:length(EmDeaths), function(k) LeaveOneOut(EmDeaths[[k]]))
+#cowplot::plot_grid(LOOs[[1]], LOOs[[2]], LOOs[[3]], LOOs[[4]])
 
 # Predicting for validation points
-val_inputs <- subset(design_em, !(output %in% train_data$run$output))
-Preds_val <- BasisPredGasp(val_inputs[,1:15], EmDeaths)
+#val_inputs <- subset(design_em, !(output %in% train_data$run$output))
+#Preds_val <- BasisPredGasp(val_inputs[,1:15], EmDeaths)
 
 # We don't know the values of the latent coefficients for runs we didn't include when estimating the basis
 # For validation, therefore easiest to a) predict latent coefficients b) sample latent fields c) reconstruct true fields from latent samples
 # Therefore get prediction for the total deaths, or regional deaths, or any other aggregation
-val_response <- CountBasisEmSamples(Preds_val, basis_deaths, ReturnAll = TRUE, BasisUncertainty = TRUE)
-dim(val_response$samples) # 339 LADs x 1000 samples x 50 validation points
-ValidateSum(val_response$samples, val_data$data)
+#val_response <- CountBasisEmSamples(Preds_val, basis_deaths, ReturnAll = TRUE, BasisUncertainty = TRUE)
+#dim(val_response$samples) # 339 LADs x 1000 samples x 50 validation points
+#ValidateSum(val_response$samples, val_data$data)
 
 # We can restrict to particular regions, e.g. NE only
-ValidateSum(val_response$samples, val_data$data, locs = which(val_data$location %in% LAD_NE))
+#ValidateSum(val_response$samples, val_data$data, locs = which(val_data$location %in% LAD_NE))
 
 # We can also plot all the individual samples and the truth at a LAD level, for the validation runs, e.g for London region
-PlotSamplesCount(val_response$samples[,1:100,], locs = which(val_data$location %in% LAD_LO), runs = 1:16, Truth = val_data$data)
+#PlotSamplesCount(val_response$samples[,1:100,], locs = which(val_data$location %in% LAD_LO), runs = 1:16, Truth = val_data$data)
 
 # Or all 339 LADs
-PlotSamplesCount(val_response$samples[,1:100,], runs = 1, Truth = val_data$data)
+#PlotSamplesCount(val_response$samples[,1:100,], runs = 1, Truth = val_data$data)
 
 # For stochastic data, we should use hetGP, so that if there's input-dependence in the nugget, we can capture it
 EmDeathsHet <- BasisEmulatorsHet(tData, 3, training_prop = 1)
+val_inputs <- subset(design_em, !(output %in% train_data$run$output))
 Preds_val_Het <- BasisPredHet(val_inputs[,1:15], EmDeathsHet)
 val_response_Het <- CountBasisEmSamples(Preds_val_Het, basis_deaths, ReturnAll = TRUE)
 
@@ -105,20 +107,23 @@ val_response_Het <- CountBasisEmSamples(Preds_val_Het, basis_deaths, ReturnAll =
 # saveRDS(Preds_val_Het, 'data/preds_het_LAD.rds')
 
 # Comparing the 2 GPs - not much difference in mean, uncertainty better captured by hetGP
-cowplot::plot_grid(ValidateSum(val_response$samples, val_data$data), 
-                   ValidateSum(val_response_Het$samples, val_data$data), nrow = 1)
-Metrics::rmse(apply(val_data$data,2,sum), apply(val_response$samples,3,sum))
-Metrics::rmse(apply(val_data$data,2,sum), apply(val_response_Het$samples,3,sum))
-Metrics::rmse(log(apply(val_data$data,2,sum)+1), log(apply(val_response$samples,3,sum))+1)
-Metrics::rmse(log(apply(val_data$data,2,sum)+1), log(apply(val_response_Het$samples,3,sum))+1)
+# cowplot::plot_grid(ValidateSum(val_response$samples, val_data$data), 
+#                    ValidateSum(val_response_Het$samples, val_data$data), nrow = 1)
+# Metrics::rmse(apply(val_data$data,2,sum), apply(val_response$samples,3,sum))
+# Metrics::rmse(apply(val_data$data,2,sum), apply(val_response_Het$samples,3,sum))
+# Metrics::rmse(log(apply(val_data$data,2,sum)+1), log(apply(val_response$samples,3,sum))+1)
+# Metrics::rmse(log(apply(val_data$data,2,sum)+1), log(apply(val_response_Het$samples,3,sum))+1)
 
-cowplot::plot_grid(ValidateSum(val_response$samples, val_data$data, locs = which(val_data$location %in% LAD_NE)), 
-                   ValidateSum(val_response_Het$samples, val_data$data, locs = which(val_data$location %in% LAD_NE)), nrow = 1)
+# cowplot::plot_grid(ValidateSum(val_response$samples, val_data$data, locs = which(val_data$location %in% LAD_NE)), 
+#                    ValidateSum(val_response_Het$samples, val_data$data, locs = which(val_data$location %in% LAD_NE)), nrow = 1)
+
+# Validation based on e.g. NE
+ValidateSum(val_response_Het$samples, val_data$data, locs = which(val_data$location %in% LAD_NE))
 
 # As before, can plot samples, e.g. for NE
 PlotSamplesCount(val_response_Het$samples[,1:100,], locs = which(val_data$location %in% LAD_NE), runs = 1:16, Truth = val_data$data)
 
-# Can plot emulator vs truth at sany specific location
+# Can plot emulator vs truth at any specific location
 ValidateSum(val_response_Het$samples, val_data$data, locs = 1)
 ValidateSum(val_response_Het$samples, val_data$data, locs = 100)
 ValidateSum(val_response_Het$samples, val_data$data, locs = 339)

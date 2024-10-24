@@ -3,7 +3,7 @@ source('code/1_ProcessData.R') # also loads in 0_CountBasis.R
 
 # Also load in functions for emulation - states of these as of 24/10/24 copied into this repository, updated elsewhere
 source('uq_code/PlotFunctions.R')
-source('uq_code/Gasp.R')
+#source('uq_code/Gasp.R')
 
 # Comparing different basis + emulator approaches
 # Considering different sizes of training set, with/without replicates, different regions, etc.
@@ -17,21 +17,21 @@ experiments <- data.frame(n = rep(c(100,150,200), each = 50),
 FitMulti(path = 'data/samples_final_LAD/PLNPCA', experiments, design_em, week12_data,
          basis = 'PLNPCA', 
          hetGP = TRUE,
-         standardGP = TRUE,
+         standardGP = FALSE, # so don't need to load in non-hetGP
          reps = FALSE)
 
 # SVD basis, no reps
 FitMulti(path = 'data/samples_final_LAD/SVD', experiments, design_em, week12_data,
          basis = 'SVD',
          hetGP = TRUE,
-         standardGP = TRUE,
+         standardGP = FALSE,
          reps = FALSE)
 
 # Total, no reps
 FitMulti(path = 'data/samples_final_LAD/Total', experiments, design_em, week12_data,
          basis = FALSE,
          hetGP = TRUE,
-         standardGP = TRUE,
+         standardGP = FALSE,
          reps = FALSE,
          reg = 'All')
 
@@ -39,7 +39,7 @@ FitMulti(path = 'data/samples_final_LAD/Total', experiments, design_em, week12_d
 regs <- c('E12000001','E12000002','E12000003','E12000004','E12000005','E12000006','E12000007','E12000008','E12000009')
 for (rr in regs){
   FitMulti(path = paste0('data/samples_final_LAD/', rr), experiments, design_em, week12_data,
-           basis = FALSE, hetGP = TRUE, standardGP = TRUE, reps = FALSE,
+           basis = FALSE, hetGP = TRUE, standardGP = FALSE, reps = FALSE,
            reg = rr)
 }
 
@@ -50,7 +50,7 @@ FitMulti(path = 'data/samples_final_ward/PLNPCA', experiments, design_em, output
          id = 'ward',
          basis = 'PLNPCA', 
          hetGP = TRUE,
-         standardGP = TRUE,
+         standardGP = FALSE,
          reps = FALSE)
 
 # For ward level output, particularly when smaller amount of training data, some wards with generally very low counts end up with large weights, resulting in very large sampled values
